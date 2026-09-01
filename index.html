@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoShield — Live Panel Monitor</title>
+<style>
+:root{
+  --bg:#0b1511;--bg2:#101d16;--panel:#17271e;--panel2:#1d3025;
+  --text:#eef2e8;--muted:#9cad9f;--green:#8fbd75;--teal:#55c8b8;
+  --orange:#d69b4e;--red:#e65d35;--yellow:#e2b64b;--line:rgba(238,242,232,.11);
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(900px 500px at 85% 0%,rgba(85,200,184,.09),transparent 60%),radial-gradient(800px 500px at 0% 20%,rgba(214,155,78,.08),transparent 60%),var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;line-height:1.55}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:auto;padding:0 28px}
+nav{position:sticky;top:0;z-index:20;background:rgba(11,21,17,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav{max-width:1120px;margin:auto;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{font-family:Georgia,serif;font-size:20px;font-weight:700}
+.links{display:flex;gap:28px;color:var(--muted);font-size:14px}
+.links a:hover{color:var(--text)}
+.chip{font:12px monospace;border:1px solid var(--line);padding:6px 11px;border-radius:999px;color:var(--teal)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:7px;box-shadow:0 0 8px var(--green)}
+.hero{padding:90px 0 80px;border-bottom:1px solid var(--line)}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:center}
+.kicker{font:12px monospace;letter-spacing:.13em;text-transform:uppercase;color:var(--teal);margin-bottom:18px}
+h1,h2,h3{font-family:Georgia,serif;line-height:1.08;margin:0}
+h1{font-size:58px;max-width:650px}
+.lead{font-size:17px;color:var(--muted);max-width:650px;margin:20px 0}
+.tag{color:var(--orange);font:13px monospace;letter-spacing:.08em}
+.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+button{border:1px solid var(--line);border-radius:10px;padding:11px 16px;background:transparent;color:var(--text);cursor:pointer;font-weight:700}
+button:hover{transform:translateY(-1px)}
+.primary{background:var(--green);color:#0c1711;border-color:transparent}
+.warn{color:var(--yellow);border-color:rgba(226,182,75,.5)}
+.fire{color:var(--red);border-color:rgba(230,93,53,.5)}
+.monitor-box{background:#07100c;border:1px solid rgba(85,200,184,.25);border-radius:18px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.monitor-head{display:flex;justify-content:space-between;color:var(--teal);font:11px monospace;margin-bottom:15px}
+.reading{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px dashed rgba(85,200,184,.15);font:14px monospace}
+.reading b{color:#dffbf2}
+.monitor-status{margin-top:16px;padding:10px;border-radius:9px;background:rgba(143,189,117,.12);border:1px solid rgba(143,189,117,.3);color:var(--green);text-align:center;font:12px monospace}
+section{padding:90px 0;border-bottom:1px solid var(--line)}
+.section-head{display:flex;justify-content:space-between;gap:30px;align-items:end;margin-bottom:38px}
+h2{font-size:38px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card.alert{border-color:rgba(230,93,53,.6);background:rgba(230,93,53,.08)}
+.card.warning{border-color:rgba(226,182,75,.6);background:rgba(226,182,75,.07)}
+.label{font:11px monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.value{font:34px Georgia,serif;margin:8px 0 2px}
+.sub{font-size:12px;color:var(--muted)}
+.status{font:10px monospace;color:var(--green);float:right}
+.banner{display:none;margin-top:18px;padding:13px;border-radius:10px;font:13px monospace}
+.banner.show{display:block}.banner.warn{background:rgba(226,182,75,.1);color:var(--yellow)}.banner.fire{background:rgba(230,93,53,.1);color:#ff9a7a}
+.layers{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.layer{display:grid;grid-template-columns:170px 1fr;gap:20px;padding:24px;border-bottom:1px solid var(--line)}
+.layer:last-child{border-bottom:0}
+.num{font:12px monospace;background:var(--green);color:#0b1511;padding:5px 9px;border-radius:6px;height:max-content;width:max-content}
+.layer:nth-child(2) .num{background:var(--orange)}
+.layer:nth-child(3) .num{background:var(--teal)}
+.layer:nth-child(4) .num{background:var(--yellow)}
+.layer h3{font-size:20px;margin-bottom:5px}
+.muted{color:var(--muted)}
+.table-wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;min-width:720px}
+th,td{text-align:left;padding:15px;border-bottom:1px solid var(--line)}
+th{font:12px monospace;color:var(--muted)}
+td{font-size:14px}
+.highlight{color:var(--teal);font-weight:700}
+.spec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.spec{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.spec h3{font-size:21px;margin-bottom:14px}
+.spec-row{display:flex;justify-content:space-between;gap:20px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+.spec-row span:first-child{color:var(--muted)}
+.qr-note{margin-top:20px;padding:18px;background:var(--panel2);border-radius:12px;color:var(--muted);font-size:13px}
+footer{padding:45px 0;text-align:center;color:var(--muted);font-size:13px}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}.section-head{display:block}.links{display:none}}
+@media(max-width:560px){.wrap,.nav{padding-left:18px;padding-right:18px}h1{font-size:42px}.cards,.spec-grid{grid-template-columns:1fr}.layer{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav">
+    <div class="brand">ECOSHIELD</div>
+    <div class="links">
+      <a href="#monitor">Live Panel</a>
+      <a href="#panel">Cross-Section</a>
+      <a href="#performance">Performance</a>
+      <a href="#spec">Spec Sheet</a>
+    </div>
+    <div class="chip"><span class="dot"></span><span id="navStatus">SYSTEM NORMAL</span></div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="kicker">Coir · Casuarina Hybrid Fire Panel</div>
+      <h1>Your wall is watching for fire before you can smell it.</h1>
+      <p class="lead">EcoShield is a fibre-composite fire-retardant panel with an embedded ESP32 sensor node — flame, vibration, and heat-rise sensing baked straight into the board. This page runs a live simulation of the panel readout.</p>
+      <div class="tag">LIVE · REFRESH 1.2S · NODE-07</div>
+      <div class="buttons">
+        <button class="primary" onclick="setScenario('normal')">Normal</button>
+        <button class="warn" onclick="setScenario('vibration')">Simulate Vibration Event</button>
+        <button class="fire" onclick="setScenario('fire')">Simulate Heat / Fire Event</button>
+      </div>
+    </div>
+    <div class="monitor-box">
+      <div class="monitor-head"><span>ECOSHIELD // NODE-07</span><span id="clock">00:00:00</span></div>
+      <div class="reading"><span>Temp (DS18B20)</span><b id="oTemp">24.6°C</b></div>
+      <div class="reading"><span>Vibration (MPU6050)</span><b id="oVib">0.04 g</b></div>
+      <div class="reading"><span>Flame Sensor</span><b id="oFlame">CLEAR</b></div>
+      <div class="reading"><span>Sound Level</span><b id="oSound">38 dB</b></div>
+      <div class="monitor-status" id="oStatus">ALL SYSTEMS NORMAL — MONITORING</div>
+    </div>
+  </div>
+</header>
+
+<section id="monitor">
+<div class="wrap">
+  <div class="section-head">
+    <div><div class="kicker">Live Panel</div><h2>Sensor telemetry</h2></div>
+    <p class="muted">Simulated readings update every 1.2 seconds.</p>
+  </div>
+  <div class="cards">
+    <div class="card" id="tempCard"><span class="status" id="tempStatus">NOMINAL</span><div class="label">Temperature</div><div class="value" id="temp">24.6°C</div><div class="sub">DS18B20 heat-rise monitoring</div></div>
+    <div class="card" id="vibCard"><span class="status" id="vibStatus">NOMINAL</span><div class="label">Structural</div><div class="value" id="vib">0.04 g</div><div class="sub">MPU6050 vibration / motion</div></div>
+    <div class="card" id="flameCard"><span class="status" id="flameStatus">NOMINAL</span><div class="label">Flame</div><div class="value" id="flame">CLEAR</div><div class="sub">IR flame detection</div></div>
+    <div class="card"><span class="status">NOMINAL</span><div class="label">Sound</div><div class="value" id="sound">38 dB</div><div class="sub">Ambient acoustic logging</div></div>
+  </div>
+  <div class="banner warn" id="vibBanner">⚠ Vibration above threshold — check panel mounting for structural stress.</div>
+  <div class="banner fire" id="fireBanner">🔥 Heat + flame rise detected — fire alert condition simulated.</div>
+</div>
+</section>
+
+<section id="panel">
+<div class="wrap">
+  <div class="section-head">
+    <div><div class="kicker">Methodology · Fabrication</div><h2>Four Layers, One Board</h2></div>
+    <p class="muted">From natural fibre blend to a networked sensing surface.</p>
+  </div>
+  <div class="layers">
+    <div class="layer"><span class="num">01 · FIBRE CORE</span><div><h3>Coir and casuarina fibre</h3><div class="muted">Coir and casuarina fibre blended and hot-pressed into the structural base board, tuned for a balance of tensile strength and low density.</div><p class="tag">HYBRID BLEND · 3.2–4.5mm CORE</p></div></div>
+    <div class="layer"><span class="num">02 · FIRE TREATMENT</span><div><h3>Intumescent surface coating</h3><div class="muted">A surface coating is described as delaying ignition and slowing flame spread across the panel face.</div><p class="tag">SURFACE COAT · INTUMESCENT</p></div></div>
+    <div class="layer"><span class="num">03 · SENSOR LAYER</span><div><h3>Embedded sensor module</h3><div class="muted">Flame sensor, MPU6050 vibration/motion sensor, and heat-rise temperature probe are embedded into a routed channel beneath the treated face.</div><p class="tag">FLAME · MPU6050 · TEMP PROBE</p></div></div>
+    <div class="layer"><span class="num">04 · CONNECTIVITY</span><div><h3>ESP32-WROOM-32</h3><div class="muted">The ESP32 reads the sensors over I2C/analog and reports status for real-time monitoring.</div><p class="tag">WI-FI / BLE</p></div></div>
+  </div>
+</div>
+</section>
+
+<section id="performance">
+<div class="wrap">
+  <div class="section-head">
+    <div><div class="kicker">Slide 9 · Comparative Test Data</div><h2>Hybrid Beats Both Parents</h2></div>
+    <p class="muted">Bench-testing comparison of the three material variants.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Sample</th><th>Ignition time (s)</th><th>Tensile strength (MPa)</th><th>Thermal conductivity (W/m·K)</th><th>Density (kg/m³)</th></tr></thead>
+      <tbody>
+        <tr><td>Pure Coir</td><td>42.3</td><td>3.8</td><td>0.061</td><td>312</td></tr>
+        <tr><td>Pure Casuarina</td><td>58.7</td><td>5.2</td><td>0.058</td><td>287</td></tr>
+        <tr><td class="highlight">Hybrid Blend</td><td class="highlight">89.4</td><td class="highlight">6.9</td><td class="highlight">0.049</td><td class="highlight">296</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="qr-note">The source site presents these as comparative bench-test figures. Use them as project/demo data unless you have your own measured laboratory results.</p>
+</div>
+</section>
+
+<section id="spec">
+<div class="wrap">
+  <div class="section-head">
+    <div><div class="kicker">Offline QR Payload</div><h2>Take the Spec Sheet With You</h2></div>
+    <button onclick="copySpec()">Copy spec text</button>
+  </div>
+  <div class="spec-grid">
+    <div class="spec"><h3>Flame Sensor IR PHOTODIODE</h3>
+      <div class="spec-row"><span>Detection range</span><b>760–1100nm infrared</b></div>
+      <div class="spec-row"><span>Detection angle</span><b>~60°</b></div>
+      <div class="spec-row"><span>Output</span><b>Digital + analog</b></div>
+      <div class="spec-row"><span>Supply</span><b>3.3–5V</b></div>
+      <div class="spec-row"><span>Role</span><b>Primary flame detection</b></div>
+    </div>
+    <div class="spec"><h3>MPU6050 ACCEL + GYRO</h3>
+      <div class="spec-row"><span>Type</span><b>6-axis accelerometer / gyroscope</b></div>
+      <div class="spec-row"><span>Accel range</span><b>±2 / ±4 / ±8 / ±16g</b></div>
+      <div class="spec-row"><span>Gyro range</span><b>±250 / ±500 / ±1000 / ±2000°/s</b></div>
+      <div class="spec-row"><span>Interface</span><b>I2C</b></div>
+      <div class="spec-row"><span>Role</span><b>Structural vibration monitoring</b></div>
+    </div>
+    <div class="spec"><h3>Temperature Sensor DS18B20</h3>
+      <div class="spec-row"><span>Type</span><b>Digital 1-Wire probe</b></div>
+      <div class="spec-row"><span>Range</span><b>−55°C to +125°C</b></div>
+      <div class="spec-row"><span>Accuracy</span><b>±0.5°C*</b></div>
+      <div class="spec-row"><span>Interface</span><b>1-Wire</b></div>
+      <div class="spec-row"><span>Role</span><b>Heat-rise cross-check</b></div>
+    </div>
+    <div class="spec"><h3>ESP32 SENSOR NODE</h3>
+      <div class="spec-row"><span>Controller</span><b>ESP32-WROOM-32</b></div>
+      <div class="spec-row"><span>Connectivity</span><b>Wi-Fi / BLE</b></div>
+      <div class="spec-row"><span>Monitoring</span><b>Flame · vibration · heat</b></div>
+      <div class="spec-row"><span>Website</span><b>Simulated telemetry</b></div>
+    </div>
+  </div>
+  <p class="qr-note">*The source page labels the DS18B20 part as “UNCONFIRMED PART” and notes that the physical bill of materials should be checked before finalizing the specification.</p>
+</div>
+</section>
+
+<footer>
+  <strong>ECOSHIELD · SMART ACOUSTIC PANEL</strong><br>
+  Coir · Casuarina Hybrid Fire Panel · Simulated Telemetry
+</footer>
+
+<script>
+let state={temp:24.6,vib:.04,flame:0,sound:38,scenario:"normal",ticks:0};
+function setScenario(s){state.scenario=s;state.ticks=0}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function tick(){
+ state.ticks++;
+ if(state.scenario==="fire"){
+   state.temp=clamp(state.temp+(Math.random()*2.2+1),20,80);
+   state.flame=clamp(state.flame+(Math.random()*14+8),0,100);
+   if(state.ticks>10)state.scenario="cool";
+ }else if(state.scenario==="cool"){
+   state.temp=clamp(state.temp-(Math.random()*.9+.4),24,80);
+   state.flame=clamp(state.flame-(Math.random()*7+3),0,100);
+   if(state.temp<28&&state.flame<5)state.scenario="normal";
+ }else if(state.scenario==="vibration"){
+   state.vib=clamp(state.vib+(Math.random()*.13+.06),.02,2.2);
+   if(state.ticks>10)state.scenario="vibcool";
+ }else if(state.scenario==="vibcool"){
+   state.vib=clamp(state.vib-(Math.random()*.1+.04),.04,2.2);
+   if(state.vib<.08)state.scenario="normal";
+ }else{
+   state.temp=clamp(state.temp+(Math.random()-.5)*.35,23,27);
+   state.vib=clamp(state.vib+(Math.random()-.5)*.018,.02,.09);
+   state.flame=clamp(state.flame+(Math.random()-.5)*1.5,0,5);
+ }
+ state.sound=clamp(state.sound+(Math.random()-.5)*4,30,85);
+ render();
+}
+function render(){
+ const fire=state.temp>43&&state.flame>30, vib=state.vib>.85, vw=state.vib>.3;
+ document.getElementById("temp").textContent=state.temp.toFixed(1)+"°C";
+ document.getElementById("vib").textContent=state.vib.toFixed(2)+" g";
+ document.getElementById("flame").textContent=state.flame>30?"DETECTED":"CLEAR";
+ document.getElementById("sound").textContent=Math.round(state.sound)+" dB";
+ document.getElementById("oTemp").textContent=state.temp.toFixed(1)+"°C";
+ document.getElementById("oVib").textContent=state.vib.toFixed(2)+" g";
+ document.getElementById("oFlame").textContent=state.flame>30?"DETECTED":"CLEAR";
+ document.getElementById("oSound").textContent=Math.round(state.sound)+" dB";
+ ["tempCard","vibCard","flameCard"].forEach(id=>document.getElementById(id).classList.remove("alert","warning"));
+ document.getElementById("vibBanner").classList.remove("show");
+ document.getElementById("fireBanner").classList.remove("show");
+ let status="ALL SYSTEMS NORMAL — MONITORING",nav="SYSTEM NORMAL";
+ if(fire){document.getElementById("tempCard").classList.add("alert");document.getElementById("flameCard").classList.add("alert");document.getElementById("fireBanner").classList.add("show");status="!! FIRE ALERT — SIMULATION ACTIVE !!";nav="FIRE ALERT"}
+ else if(vib){document.getElementById("vibCard").classList.add("alert");document.getElementById("vibBanner").classList.add("show");status="VIBRATION ANOMALY — CHECK MOUNTING";nav="VIBRATION ALERT"}
+ else if(vw){document.getElementById("vibCard").classList.add("warning");document.getElementById("vibBanner").classList.add("show");status="ELEVATED READING — MONITORING CLOSELY";nav="ELEVATED"}
+ document.getElementById("oStatus").textContent=status;
+ document.getElementById("navStatus").textContent=nav;
+ document.getElementById("clock").textContent=new Date().toTimeString().slice(0,8);
+}
+function copySpec(){
+ const text=`ECOSHIELD SENSOR NODE
+Flame Sensor: IR photodiode, 760–1100nm, digital + analog
+MPU6050: 6-axis accelerometer/gyroscope, I2C
+Temperature: DS18B20, digital 1-Wire
+Controller: ESP32-WROOM-32, Wi-Fi/BLE
+Monitoring: flame, vibration and heat-rise
+NOTE: Website telemetry is simulated.`;
+ navigator.clipboard?.writeText(text);
+}
+render();setInterval(tick,1200);
+</script>
+</body>
+</html>
